@@ -1,0 +1,36 @@
+[
+  {
+    "source_id": "fictional-fixture-001",
+    "source_url": "https://example.invalid/characters/fictional-001",
+    "name_ja": "架空テストむすめＡ",
+    "name_en": "FICTIONAL TEST A",
+    "illustrator": "架空テスト原案者",
+    "voice_actor": "架空テスト声優",
+    "prefecture": "岡山県",
+    "birthday": "2月29日",
+    "height": "143cm",
+    "release_date": "2020年1月2日",
+    "unit_names": ["架空ユニットＡ", "架空ユニットＢ"],
+    "onsen_names": ["架空温泉Ａ", "架空温泉Ｂ"]
+  },
+  {
+    "source_id": "fictional-fixture-002",
+    "source_url": "https://example.invalid/characters/fictional-002",
+    "name_ja": "架空テストむすめＢ",
+    "illustrator": "架空テスト原案者",
+    "voice_actor": "架空テスト声優",
+    "prefecture": "岡山県",
+    "unit_names": [],
+    "onsen_names": ["架空温泉Ａ"]
+  },
+  {
+    "source_id": "fictional-fixture-003",
+    "source_url": "https://example.invalid/characters/fictional-003",
+    "name_ja": "架空テスト特別キャラクター",
+    "prefecture": null,
+    "birthday_month": null,
+    "birthday_day": null,
+    "unit_names": [],
+    "onsen_names": []
+  }
+]

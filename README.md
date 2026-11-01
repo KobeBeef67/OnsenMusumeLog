@@ -6,11 +6,110 @@ This importer does not scrape websites or download images.
 ## Prerequisites
 
 - Python 3.10 or newer.
-- PostgreSQL with the project tables and prefecture seed data already created
-  in `public`. The SQL schema discussed during project setup is a separate step;
-  this importer does not create or migrate tables.
+- PostgreSQL with the project tables, location seed data, and views created
+  in `public` using the instructions below. The importer does not create or
+  migrate tables.
 - Verified character identifiers and onsen/unit associations. Never infer an
   identifier from an image filename or an onsen from a prefecture.
+
+## Repository layout
+
+The checkout folder may be named `OnsenMusume`, `OnsenMusumeLog`, or another name.
+All commands below run from its root, where this README and `requirements.txt` live.
+
+```text
+database/                  SQL schema, reference data, views, and example queries
+  migrations/              Changes for an existing database
+importer/                  Python JSON importer
+scraper/                   Manual browser-console extraction
+tests/fixtures/            Fictional JSON safe to commit
+docs/schema.md             Relationships, field rules, and design limits
+```
+
+Local directories `data/raw/`, `data/reviewed/`, `data/exports/`, and `backups/`
+are ignored by Git. Create them as needed; ignored data directories and their
+contents are not part of the checkout. Keep the five reviewed JSON batches in
+`data/reviewed/`. Git tracks code, SQL, documentation, and fictional fixtures.
+
+## Create the database
+
+In pgAdmin, create a database named `onsen_musume` with UTF-8 encoding. Open its
+Query Tool and run the following files in order:
+
+1. `database/schema.sql` — tables, constraints, and indexes; run once on a fresh database.
+2. `database/seed.sql` — Japan's 47 prefectures plus the source location label 台湾.
+3. `database/views.sql` — `character_profile`, `character_onsen_details`, and `character_unit_details`.
+
+Alternatively, with `psql` available and authentication configured:
+
+```bash
+psql -h localhost -U postgres -d onsen_musume -v ON_ERROR_STOP=1 -f database/schema.sql
+psql -h localhost -U postgres -d onsen_musume -v ON_ERROR_STOP=1 -f database/seed.sql
+psql -h localhost -U postgres -d onsen_musume -v ON_ERROR_STOP=1 -f database/views.sql
+```
+
+For the existing database created during setup, **do not rerun schema.sql**.
+You may reapply `seed.sql` and `views.sql`; they preserve character data.
+The Taiwan-only addition is also available as `database/migrations/001_add_taiwan.sql`.
+See [the schema notes](docs/schema.md) and `database/queries.sql` for exploration.
+
+## Git Bash setup on Windows
+
+```bash
+python -m venv .venv
+./.venv/Scripts/python.exe -m pip install -r requirements.txt
+export PGHOST="localhost"
+export PGPORT="5432"
+export PGDATABASE="onsen_musume"
+export PGUSER="postgres"
+mkdir -p data/raw data/reviewed data/exports backups
+```
+
+If `python` is unavailable, try `py -m venv .venv`. No virtual-environment
+activation is required when using its Python executable directly.
+
+Validate the committed fictional fixture without accessing PostgreSQL:
+
+```bash
+./.venv/Scripts/python.exe importer/import_characters.py tests/fixtures/fictional_characters.json --validate-only
+```
+
+After saving your reviewed batches locally, validate and import one batch:
+
+```bash
+./.venv/Scripts/python.exe importer/import_characters.py data/reviewed/batch_01.json --validate-only
+./.venv/Scripts/python.exe importer/import_characters.py data/reviewed/batch_01.json --prompt-password
+```
+
+The second command commits records. Enter your local PostgreSQL password at the
+hidden prompt. Repeat for batches 02–05. Existing IDs are skipped, not updated.
+For Linux/WSL use `python3 -m venv .venv` and `.venv/bin/python` instead of the
+Windows executable. In WSL, `localhost` refers to the WSL environment; PostgreSQL
+running on Windows may require its Windows host address as `PGHOST`.
+
+## Manual scraper
+
+Open one source character profile in your browser, open DevTools Console, and
+run the contents of `scraper/character_scraper.js`. It prints JSON and attempts
+to copy it. Save your local output under `data/raw/`, inspect every value and
+warning, then save the approved version under `data/reviewed/` for importing.
+
+The script reads the current page only; it does not crawl or fetch other pages.
+It preserves the working body-text label extraction and prefecture DOM traversal.
+Source IDs come from the matching slug in embedded page data, not image names.
+Missing or changed page structure is reported through warnings.
+
+Onsen associations require review, including compound surnames and regional
+names. Populate `onsen_names` explicitly, sharing names consistently across
+characters. The script leaves that array empty rather than guessing. Review
+actual memberships for special characters or source classification labels.
+If a future website change breaks extraction, preserve your local working script
+and compare the page DOM before changing selectors.
+
+The importer ignores staging-only fields such as `source_birthday`, `source_height`,
+`source_release_date`, `constellation`, and `warnings`. Read warnings before import;
+they are not an automatic import veto. An omitted `description` becomes SQL NULL
+for a new character. Never commit real local credentials or collected datasets.
 
 ## Windows setup
 
@@ -107,8 +206,9 @@ WHERE source_id = 'fictional-import-test-001';
 .\.venv\Scripts\python.exe -m unittest discover -s tests -v
 ```
 
-For database tests, first create a separate test database and run the schema SQL
-there. Set `TEST_DATABASE_URL` using libpq connection-string syntax (use a
+For database tests, first create a separate test database and run `schema.sql`,
+`seed.sql`, and `views.sql` there in that order. Set `TEST_DATABASE_URL` using
+libpq connection-string syntax (use a
 password file instead of putting a password in shell history), then rerun:
 
 ```powershell
