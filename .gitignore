@@ -1,0 +1,27 @@
+# Python virtual environments
+.venv/
+venv/
+
+# Python generated files
+__pycache__/
+*.py[cod]
+
+# Local credentials and configuration
+.env
+.env.*
+!.env.example
+
+# Scraped data and database exports
+/data/raw/
+/data/reviewed/
+/data/exports/
+
+# Local database backups
+/backups/
+
+# Logs
+*.log
+
+# Operating system files
+.DS_Store
+Thumbs.db
